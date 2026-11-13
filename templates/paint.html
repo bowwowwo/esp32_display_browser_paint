@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pant</title>
+    <style>
+        body { text-align: center; }
+        #canvasContainer {
+            display: grid;
+            grid-template-columns: repeat(128, 10px);
+            grid-template-rows: repeat(64, 10px);
+            gap: 1px;
+            width: fit-content;
+            margin: auto;
+        }
+    .pixel {
+            width: 10px;
+            height: 10px;
+            background: black;
+    }
+    </style>
+</head>
+<body style=" background: rgb(33,36,113); background: radial-gradient(circle, rgba(33,36,113,1) 0%, rgba(30,33,88,1) 0%, rgba(32,56,119,1) 67%, rgba(25,60,112,1) 100%); ">
+
+    <div id="canvasContainer"></div>
+    <br>
+    <button onclick="setMode('pen')">Pen</button>
+    <button onclick="setMode('eraser')">Eraser</button>
+    <button onclick="clearCanvas()">Clear</button>
+    
+    <script> 
+        const container = document.getElementById("canvasContainer");
+        let mode = "pen";
+
+
+        const pixelStates = Array(128 * 64).fill(false); //array for session saving and easier painting // can change the resolution
+
+        function createCanvas() { //create a div pixel for each 
+            for (let i = 0; i < pixelStates.length; i++) {
+                const pixel = document.createElement("div");
+                pixel.classList.add("pixel");
+
+                pixel.dataset.index = i;
+
+                pixel.addEventListener("mousedown", paint);
+                pixel.addEventListener("dragstart", e => e.preventDefault()); //stop dragging
+                pixel.addEventListener("mouseover", (e) => {
+                    if (e.buttons === 1) paint(e);
+                });
+                container.appendChild(pixel);
+            }
+        }
+
+        function paint(e) { //changes pixel color and gets which pixel is being painted
+            const index = Number(e.target.dataset.index);
+            const isOn = mode === 'pen';
+
+            if (pixelStates[index] === isOn) return;
+
+            pixelStates[index] = isOn;
+            e.target.style.background = isOn ? 'cyan' : 'black';
+
+            var pixelInfo = {state: isOn, index: index};
+            //console.log(pixelInfo);
+            sendPixel(pixelInfo);
+        }
+
+        function setMode(selectedMode) {
+            mode = selectedMode;
+        }
+
+        function clearCanvas() {
+
+
+            pixelStates.fill(false);
+
+            document.querySelectorAll(".pixel").forEach(pixel => {
+                pixel.style.background = "black";
+            });
+
+            sendClear({ clear: 1 });
+        }
+        async function sendPixel(pixelInfo){
+
+            const response = await fetch('/pixels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pixelInfo)
+            });
+
+            //const result = await response.json();
+            //console.log(result);
+        }
+
+        async function sendClear(clearVar){
+
+            const response = await fetch('/pixels', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(clearVar)
+            });
+
+            //const result = await response.json();
+            //console.log(result);
+        }
+
+        createCanvas();
+    </script>
+
+</body>
+</html>
