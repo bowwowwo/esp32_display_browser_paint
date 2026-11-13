@@ -24,7 +24,7 @@ def get_pixels():
     
 
     print(p)
-    print("Sending:", p)
+    #print("sending ", p)
     pr.packetSerial(p)
     
     #print(state, index)
